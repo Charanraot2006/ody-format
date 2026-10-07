@@ -1,0 +1,85 @@
+{
+  "pack": {
+    "pack_id": "example-navigation-basics-en",
+    "title": "Navigation Basics (Example)",
+    "description": "Illustrative example pack: basic orientation and navigation practice. Educational sample content for the ODY format.",
+    "language": "en",
+    "version": "1.0.0",
+    "category": "knowledge",
+    "content_class": "NON_MEDICAL_PROCEDURE",
+    "created_at": "2026-01-01T00:00:00Z",
+    "license_policy": "CC-BY-4.0",
+    "capabilities": ["NAVIGATION", "ORIENTATION"],
+    "region_codes": [],
+    "publisher_id": "ody-examples",
+    "publisher_type": "community",
+    "review_status": "technical_demo",
+    "source_dataset": "public navigation education (illustrative)",
+    "transformations": ["normalize", "validate", "sqlite-fts5-index"],
+    "source_published_at": "2026-01-01",
+    "expiry_behavior": "warn",
+    "confidence": { "technical": 0.6 }
+  },
+  "sources": [
+    {
+      "source_id": "src-nav-general",
+      "title": "General public navigation guidance (illustrative example)",
+      "url": "https://example.org/ody-format/navigation",
+      "publisher": "ody-examples",
+      "retrieved_at": "2026-01-01",
+      "source_version": "1",
+      "license_status": "CC-BY-4.0",
+      "allowed_use": "attribution"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "nav-orientation",
+      "category": "navigation",
+      "risk_class": "LOW",
+      "title": "Basic orientation",
+      "summary": "Before moving, establish where you are and which direction you need to travel.",
+      "detail": "Identify at least two fixed reference points and confirm your intended direction against them. Note your starting point so you can return to it.",
+      "actions": ["Identify at least two fixed reference points", "Confirm your intended direction", "Note your starting point"],
+      "checklist": ["Your position is known", "Your direction is confirmed", "Your starting point is noted"],
+      "decision_rules": ["If you cannot confirm your position, stop and re-orient before moving", "If visibility is poor, prefer to stay put until it improves"],
+      "prohibitions": ["Do not travel further while uncertain of your position", "Do not rely on a single reference point"],
+      "source_ids": ["src-nav-general"],
+      "keywords": ["navigation", "orientation", "direction", "position", "reference"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "nav-map-compass",
+      "category": "navigation",
+      "risk_class": "LOW",
+      "title": "Using a map and compass",
+      "summary": "A map and a compass complement each other: the map shows the terrain, the compass shows direction.",
+      "detail": "Orient the map to the terrain before reading it, and take a bearing before you start moving rather than while walking.",
+      "actions": ["Orient the map to the terrain", "Take a bearing before moving", "Check your bearing periodically"],
+      "checklist": ["Map is oriented", "Bearing is taken", "Periodic checks are planned"],
+      "decision_rules": ["If map and terrain disagree, trust direct observation and re-check your position", "If the compass reading is unstable, move away from metal objects and re-take the bearing"],
+      "prohibitions": ["Do not use a compass near large metal objects or electronics", "Do not follow a bearing without checking the terrain ahead"],
+      "source_ids": ["src-nav-general"],
+      "keywords": ["map", "compass", "bearing", "terrain", "navigation"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "nav-route-discipline",
+      "category": "navigation",
+      "risk_class": "LOW",
+      "title": "Route discipline",
+      "summary": "Plan a route before starting and stick to it unless conditions clearly require a change.",
+      "detail": "Set simple checkpoints along the route and note the time you expect to reach each one. If you reach a checkpoint late, reassess before continuing.",
+      "actions": ["Plan the route with checkpoints", "Note expected arrival times", "Reassess when a checkpoint is missed"],
+      "checklist": ["Route is planned", "Checkpoints and times are noted", "A turnaround time is set"],
+      "decision_rules": ["If you miss a checkpoint time, reassess the plan before continuing", "If conditions worsen beyond your preparation, turn back"],
+      "prohibitions": ["Do not extend the route without a clear reason", "Do not continue past your planned turnaround time"],
+      "source_ids": ["src-nav-general"],
+      "keywords": ["route", "checkpoint", "plan", "turnaround", "navigation"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    }
+  ]
+}

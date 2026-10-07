@@ -1,0 +1,85 @@
+{
+  "pack": {
+    "pack_id": "example-signaling-basics-en",
+    "title": "Signaling Basics (Example)",
+    "description": "Illustrative example pack: basic emergency signaling practice. Educational sample content for the ODY format.",
+    "language": "en",
+    "version": "1.0.0",
+    "category": "procedures",
+    "content_class": "NON_MEDICAL_PROCEDURE",
+    "created_at": "2026-01-01T00:00:00Z",
+    "license_policy": "CC-BY-4.0",
+    "capabilities": ["SIGNALING", "COMMUNICATION"],
+    "region_codes": [],
+    "publisher_id": "ody-examples",
+    "publisher_type": "community",
+    "review_status": "technical_demo",
+    "source_dataset": "public emergency signaling education (illustrative)",
+    "transformations": ["normalize", "validate", "sqlite-fts5-index"],
+    "source_published_at": "2026-01-01",
+    "expiry_behavior": "warn",
+    "confidence": { "technical": 0.6 }
+  },
+  "sources": [
+    {
+      "source_id": "src-signal-general",
+      "title": "General public emergency signaling guidance (illustrative example)",
+      "url": "https://example.org/ody-format/signaling",
+      "publisher": "ody-examples",
+      "retrieved_at": "2026-01-01",
+      "source_version": "1",
+      "license_status": "CC-BY-4.0",
+      "allowed_use": "attribution"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "signal-distress-basics",
+      "category": "signaling",
+      "risk_class": "LOW",
+      "title": "Distress signals",
+      "summary": "Use repeated, clearly distinguishable signals to indicate that you need help.",
+      "detail": "Three of anything is a widely recognized distress pattern: three whistle blasts, three fires, three light flashes. Space repetitions so they are clearly deliberate.",
+      "actions": ["Use a repeating pattern of three", "Leave pauses between repetitions", "Conserve energy between signal attempts"],
+      "checklist": ["A signaling method is chosen", "The pattern is repeated and deliberate", "Energy is conserved between attempts"],
+      "decision_rules": ["If a signal is answered, stop and listen for instructions", "If there is no answer, rest and repeat at intervals"],
+      "prohibitions": ["Do not signal continuously without pauses", "Do not leave your position to chase a response"],
+      "source_ids": ["src-signal-general"],
+      "keywords": ["signal", "distress", "three", "whistle", "help"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "signal-visibility",
+      "category": "signaling",
+      "risk_class": "LOW",
+      "title": "Making yourself visible",
+      "summary": "Contrast and movement attract attention: place signals where they stand out against the surroundings.",
+      "detail": "Use bright or contrasting materials against snow, rock, or vegetation. In open areas, create large shapes that are visible from a distance or from the air.",
+      "actions": ["Choose a high-contrast location", "Create large, simple shapes", "Add movement where possible"],
+      "checklist": ["The signal contrasts with its surroundings", "The signal is visible from a distance", "Movement is used if possible"],
+      "decision_rules": ["If the signal blends in, move it or add contrast", "If you hear or see searchers, prioritize being seen over creating more signals"],
+      "prohibitions": ["Do not place signals where they are hidden by terrain", "Do not use signals that could be mistaken for ordinary activity"],
+      "source_ids": ["src-signal-general"],
+      "keywords": ["visible", "contrast", "signal", "search", "movement"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "signal-communication-discipline",
+      "category": "signaling",
+      "risk_class": "LOW",
+      "title": "Communication discipline",
+      "summary": "When contact is established, communicate clearly and conserve power for further contact.",
+      "detail": "State your position, your situation, and what you need, then listen. Keep messages short and repeat key information.",
+      "actions": ["State position and situation first", "Keep messages short", "Listen before replying", "Conserve battery power"],
+      "checklist": ["Position is known and ready to state", "Messages are short and repeated", "Power is conserved"],
+      "decision_rules": ["If the connection is weak, repeat only the essential facts", "If power is low, reduce transmission frequency"],
+      "prohibitions": ["Do not transmit continuously", "Do not turn off a device that has established contact"],
+      "source_ids": ["src-signal-general"],
+      "keywords": ["communication", "contact", "message", "power", "position"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    }
+  ]
+}

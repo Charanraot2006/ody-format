@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/ody-format/ody-format/main/schemas/ody-mission-bundle-v1.schema.json",
+  "title": "ODY Mission Bundle v1",
+  "description": "Ein Mission Bundle verbindet Packs zu einer konkreten Vorbereitung: Procedures + Reference Data + Terrain/Maps + Reader Library + Mission Rules.",
+  "type": "object",
+  "required": ["schema_version", "mission_id", "title", "required_packs", "readiness"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "ody-mission-bundle/v1"
+    },
+    "mission_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{2,63}$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "region_codes": { "type": "array", "items": { "type": "string" } },
+    "required_packs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["pack_id"],
+        "additionalProperties": false,
+        "properties": {
+          "pack_id": { "type": "string" },
+          "version_constraint": { "type": "string" },
+          "reason": { "type": "string", "description": "Warum ist dieses Pack fuer die Mission kritisch?" }
+        }
+      }
+    },
+    "recommended_packs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pack_id"],
+        "additionalProperties": false,
+        "properties": {
+          "pack_id": { "type": "string" },
+          "version_constraint": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "description": "Trennt harte Blocker strikt vom Prozent-Score: Ein fehlendes required_pack blockiert unabhaengig vom Score.",
+      "required": ["evaluation_contract"],
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_contract": {
+          "type": "string",
+          "enum": ["hard_blockers_override_score"],
+          "description": "Der Vertrag: hard_blockers sind immer BLOCKED, unabhaengig von irgendeinem Score."
+        },
+        "hard_blocker_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Maschinenlesbare Bedingung, z.B. 'all required_packs installed and not revoked'."
+          }
+        },
+        "warning_conditions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "map_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "[min_lon, min_lat, max_lon, max_lat]"
+        },
+        "coverage_mode": {
+          "type": "string",
+          "enum": ["bbox", "region_codes", "explicit_packs"]
+        }
+      }
+    },
+    "situational_triggers": {
+      "type": "array",
+      "description": "Optionale Kontext-Trigger. Medizinische Trigger bleiben ausschliesslich ADVISORY.",
+      "items": {
+        "type": "object",
+        "required": ["trigger_id", "safety_class", "conditions", "knowledge_refs"],
+        "additionalProperties": false,
+        "properties": {
+          "trigger_id": { "type": "string" },
+          "safety_class": {
+            "type": "string",
+            "enum": ["INFORMATIONAL", "ADVISORY", "CAUTION"]
+          },
+          "conditions": { "type": "array", "items": { "type": "string" } },
+          "knowledge_refs": { "type": "array", "items": { "type": "string" } },
+          "cooldown_seconds": { "type": "integer", "minimum": 0 },
+          "expires_when": { "type": "array", "items": { "type": "string" } },
+          "explain_reason": { "type": "string" }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "author": { "type": "string" },
+        "created_at": { "type": "string", "format": "date" },
+        "review_status": {
+          "type": "string",
+          "enum": ["unreviewed", "technical_demo", "community_reviewed", "editor_reviewed", "expert_reviewed"]
+        }
+      }
+    }
+  }
+}

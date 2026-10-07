@@ -1,0 +1,56 @@
+{
+  "schema_version": "ody-mission-bundle/v1",
+  "mission_id": "example-alpine-crossing",
+  "title": "Alpine Crossing (Example)",
+  "description": "Illustrative example mission bundle: shows how required and recommended packs come together for a prepared multi-day alpine crossing.",
+  "region_codes": ["DE-BY", "AT-TI"],
+  "required_packs": [
+    {
+      "pack_id": "example-navigation-basics-en",
+      "version_constraint": ">=1.0.0",
+      "reason": "Orientation and route discipline are critical in alpine terrain."
+    },
+    {
+      "pack_id": "example-water-basics-en",
+      "version_constraint": ">=1.0.0",
+      "reason": "Safe water treatment is critical for a multi-day trip."
+    }
+  ],
+  "recommended_packs": [
+    {
+      "pack_id": "example-signaling-basics-en",
+      "version_constraint": ">=1.0.0",
+      "reason": "Emergency signaling is valuable when the group is separated."
+    }
+  ],
+  "readiness": {
+    "evaluation_contract": "hard_blockers_override_score",
+    "hard_blocker_conditions": [
+      "all required_packs installed and not revoked"
+    ],
+    "warning_conditions": [
+      "any recommended_pack missing",
+      "any installed pack review_status is technical_demo"
+    ]
+  },
+  "map_coverage": {
+    "bbox": [10.0, 46.5, 13.5, 48.5],
+    "coverage_mode": "bbox"
+  },
+  "situational_triggers": [
+    {
+      "trigger_id": "alpine-weather-window",
+      "safety_class": "INFORMATIONAL",
+      "conditions": ["exposed ridge segment ahead", "forecast window shorter than planned transit"],
+      "knowledge_refs": ["example-navigation-basics-en#nav-route-discipline"],
+      "cooldown_seconds": 1800,
+      "expires_when": ["ridge segment passed"],
+      "explain_reason": "Exposed terrain and short weather windows interact; route discipline applies."
+    }
+  ],
+  "metadata": {
+    "author": "ody-examples",
+    "created_at": "2026-01-01",
+    "review_status": "technical_demo"
+  }
+}

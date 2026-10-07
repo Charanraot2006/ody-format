@@ -1,0 +1,674 @@
+#!/usr/bin/env python3
+"""
+ody — reference toolchain for the ODY offline pack format.
+
+Build knowledge that still works when the internet doesn't.
+
+Commands:
+  init      Scaffold a new pack source file (hello world).
+  validate  Validate a pack source file or a manifest against the spec.
+  build     Build a pack (SQLite + FTS5) and its manifest from a source file.
+  inspect   Inspect a built pack and optionally verify its integrity.
+
+No external dependencies. Python 3.8+ standard library only.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import sqlite3
+import sys
+from pathlib import Path
+from typing import Any
+
+BUILDER_VERSION = "ody-format-builder/2.0.0"
+MANIFEST_SCHEMA_VERSION = "ody-pack-manifest/v2"
+
+NON_MEDICAL_CLASSES = {"NON_MEDICAL_PROCEDURE", "REFERENCE_DATA", "READER_METADATA"}
+MEDICAL_CLASS = "MEDICAL_ADVISORY"
+ALL_CLASSES = NON_MEDICAL_CLASSES | {MEDICAL_CLASS}
+
+ENTRY_LIST_FIELDS = ("actions", "checklist", "decision_rules", "prohibitions", "source_ids", "keywords")
+SOURCE_FIELDS = ("source_id", "title", "url", "publisher", "retrieved_at", "source_version", "license_status", "allowed_use")
+RESERVED_MEDICAL_TERMS = ("diagnosis", "diagnose", "dose", "dosage", "medication", "prescription", "hace", "hape")
+
+# Word-boundary match: avoid false positives like "shape" matching "hape".
+RESERVED_MEDICAL_RE = re.compile(
+    r"\b(" + "|".join(re.escape(t) for t in RESERVED_MEDICAL_TERMS) + r")\b"
+)
+
+PACK_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,63}$")
+SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+CAPABILITY_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,63}$")
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+
+REVIEW_STATUSES = ["unreviewed", "technical_demo", "community_reviewed", "editor_reviewed", "expert_reviewed"]
+PUBLISHER_TYPES = ["official", "verified_partner", "community", "individual"]
+CATEGORIES = ["maps", "knowledge", "procedures", "routing", "elevation", "dictionary", "model", "bundle"]
+
+
+class Fail(Exception):
+    """Raised on any validation or build failure."""
+
+
+def err(msg: str) -> None:
+    raise Fail(msg)
+
+
+# ---------------------------------------------------------------- sha / time
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_timestamp(pack: dict[str, Any]) -> str:
+    """Reproducible timestamp: SOURCE_DATE_EPOCH wins, else pack.created_at, else now."""
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    if epoch and epoch.isdigit():
+        import datetime
+        return datetime.datetime.utcfromtimestamp(int(epoch)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    created = str(pack.get("created_at", "")).strip()
+    return created if created else "1970-01-01T00:00:00Z"
+
+
+def build_date_only(timestamp: str) -> str:
+    return timestamp[:10] if len(timestamp) >= 10 else "1970-01-01"
+
+
+# ------------------------------------------------------- source validation
+
+def nonempty_list(value: Any) -> bool:
+    return isinstance(value, list) and bool(value) and all(isinstance(x, str) and x.strip() for x in value)
+
+
+def text_blob(entry: dict[str, Any]) -> str:
+    values = [entry.get(k, "") for k in ("title", "summary", "detail")]
+    for key in ENTRY_LIST_FIELDS:
+        v = entry.get(key, [])
+        values.extend(v if isinstance(v, list) else [])
+    return " ".join(str(v).lower() for v in values)
+
+
+def validate_source(data: dict[str, Any]) -> list[str]:
+    """Validate a pack source document. Returns a list of human-readable problems."""
+    problems: list[str] = []
+    pack = data.get("pack")
+    if not isinstance(pack, dict):
+        return ["missing 'pack' object"]
+
+    for key in ("pack_id", "title", "description", "language", "version", "content_class", "created_at", "license_policy"):
+        if not isinstance(pack.get(key), str) or not pack[key].strip():
+            problems.append(f"pack.{key} must be a non-empty string")
+
+    if isinstance(pack.get("pack_id"), str) and not PACK_ID_RE.match(pack["pack_id"]):
+        problems.append("pack.pack_id must match ^[a-z0-9][a-z0-9_-]{2,63}$")
+    if isinstance(pack.get("version"), str) and not SEMVER_RE.match(pack["version"]):
+        problems.append("pack.version must be semantic (e.g. 1.0.0)")
+    if pack.get("content_class") not in ALL_CLASSES:
+        problems.append(f"pack.content_class={pack.get('content_class')!r} is not one of {sorted(ALL_CLASSES)}")
+
+    caps = pack.get("capabilities")
+    if not nonempty_list(caps):
+        problems.append("pack.capabilities must be a non-empty list of capability strings")
+    else:
+        for c in caps:
+            if not CAPABILITY_RE.match(c):
+                problems.append(f"capability {c!r} must match ^[A-Z][A-Z0-9_]+$")
+
+    category = pack.get("category", "knowledge")
+    if category not in CATEGORIES:
+        problems.append(f"pack.category={category!r} must be one of {CATEGORIES}")
+
+    if pack.get("publisher_type", "community") not in PUBLISHER_TYPES:
+        problems.append(f"pack.publisher_type={pack.get('publisher_type')!r} must be one of {PUBLISHER_TYPES}")
+    if pack.get("review_status", "technical_demo") not in REVIEW_STATUSES:
+        problems.append(f"pack.review_status={pack.get('review_status')!r} must be one of {REVIEW_STATUSES}")
+
+    medical = pack.get("content_class") == MEDICAL_CLASS
+    governance = data.get("medical_governance")
+    if medical:
+        if not isinstance(governance, dict):
+            problems.append("MEDICAL_ADVISORY requires a 'medical_governance' object")
+        else:
+            required = {"medical_schema_version", "review_status", "clinical_review_required", "allowed_behavior"}
+            missing = required - set(governance)
+            if missing:
+                problems.append(f"medical_governance incomplete: missing {sorted(missing)}")
+            if governance.get("review_status") != "PENDING_MEDICAL_REVIEW":
+                problems.append("medical content must remain review_status=PENDING_MEDICAL_REVIEW")
+            if governance.get("clinical_review_required") is not True:
+                problems.append("medical content requires clinical_review_required=true")
+            if governance.get("allowed_behavior") != "ADVISORY_ONLY":
+                problems.append("medical content must be ADVISORY_ONLY")
+    elif governance is not None:
+        problems.append("non-medical pack must not include 'medical_governance'")
+
+    sources = data.get("sources")
+    source_ids: set[str] = set()
+    if not isinstance(sources, list) or not sources:
+        problems.append("'sources' must be a non-empty list")
+    else:
+        for source in sources:
+            if not isinstance(source, dict):
+                problems.append("each source must be an object")
+                continue
+            for key in SOURCE_FIELDS:
+                if not isinstance(source.get(key), str) or not source[key].strip():
+                    problems.append(f"source.{key} must be a non-empty string")
+            sid = source.get("source_id", "")
+            if not str(source.get("url", "")).startswith("https://"):
+                problems.append(f"source {sid} must use an https:// URL")
+            if sid in source_ids:
+                problems.append(f"duplicate source_id {sid}")
+            source_ids.add(sid)
+
+    entries = data.get("entries")
+    if not isinstance(entries, list) or not 1 <= len(entries) <= 5000:
+        problems.append("'entries' must contain between 1 and 5000 records")
+        entries = []
+    seen: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            problems.append("each entry must be an object")
+            continue
+        for key in ("entry_id", "category", "risk_class", "title", "summary", "detail", "declared_content_class", "review_status"):
+            if not isinstance(entry.get(key), str) or not entry[key].strip():
+                problems.append(f"entry.{key} must be a non-empty string")
+        eid = entry.get("entry_id", "<no id>")
+        if eid in seen:
+            problems.append(f"duplicate entry_id {eid}")
+        seen.add(eid)
+        if entry.get("declared_content_class") != pack.get("content_class"):
+            problems.append(f"entry {eid} content class differs from pack")
+        for key in ENTRY_LIST_FIELDS:
+            if not nonempty_list(entry.get(key)):
+                problems.append(f"entry {eid} field '{key}' must be a non-empty structured list")
+        unresolved = set(entry.get("source_ids", [])) - source_ids
+        if unresolved:
+            problems.append(f"entry {eid} has unresolved sources: {sorted(unresolved)}")
+        if medical:
+            if entry.get("review_status") != "PENDING_MEDICAL_REVIEW":
+                problems.append(f"medical entry {eid} must remain PENDING_MEDICAL_REVIEW")
+        else:
+            if entry.get("review_status") != "TECHNICAL_DEMO":
+                problems.append(f"non-medical entry {eid} must be TECHNICAL_DEMO before promotion")
+            hits = sorted(set(RESERVED_MEDICAL_RE.findall(text_blob(entry))))
+            if hits:
+                problems.append(f"entry {eid} contains reserved medical terms {hits}; declare MEDICAL_ADVISORY instead")
+    return problems
+
+
+# ------------------------------------------------------------- manifest gen
+
+def build_manifest(data: dict[str, Any], artifact: Path) -> dict[str, Any]:
+    pack = data["pack"]
+    ts = build_timestamp(pack)
+    file_sha = sha256_file(artifact)
+    file_size = artifact.stat().st_size
+    content_governance: dict[str, Any] = {
+        "declared_content_class": pack["content_class"],
+        "license_policy": pack["license_policy"],
+    }
+    if data.get("medical_governance"):
+        content_governance["medical_governance"] = data["medical_governance"]
+
+    manifest: dict[str, Any] = {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "identity": {
+            "pack_id": pack["pack_id"],
+            "display_name": pack["title"],
+            "description": pack["description"],
+            "category": pack.get("category", "knowledge"),
+            "language": pack["language"],
+            "region_codes": pack.get("region_codes", []),
+        },
+        "version": {
+            "semantic": pack["version"],
+            "built_at": ts,
+        },
+        "capabilities": pack["capabilities"],
+        "dependencies": pack.get("dependencies", {"requires": [], "optional": []}),
+        "lineage": {
+            "source_dataset": pack.get("source_dataset", pack.get("license_policy", "unspecified")),
+            "transformations": pack.get("transformations", ["normalize", "validate", "sqlite-fts5-index"]),
+            "builder_version": BUILDER_VERSION,
+        },
+        "freshness": {
+            "source_published_at": pack.get("source_published_at", build_date_only(ts)),
+            "pack_built_at": build_date_only(ts),
+            "expiry_behavior": pack.get("expiry_behavior", "warn"),
+        },
+        "confidence": pack.get("confidence", {}),
+        "publisher": {
+            "publisher_id": pack.get("publisher_id", pack["pack_id"].split("-")[0]),
+            "publisher_type": pack.get("publisher_type", "community"),
+        },
+        "review": {
+            "status": pack.get("review_status", "technical_demo"),
+        },
+        "content_governance": content_governance,
+        "integrity": {
+            "hash_algorithm": "sha256",
+            "signature_algorithm": "ed25519",
+        },
+        "files": [
+            {
+                "filename": artifact.name,
+                "sha256": file_sha,
+                "size_bytes": file_size,
+                "role": "primary",
+            }
+        ],
+    }
+    if pack.get("device_requirements"):
+        manifest["device_requirements"] = pack["device_requirements"]
+    return manifest
+
+
+# ------------------------------------------------------------- manifest check
+
+def check_schema(value: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
+    """Minimal JSON-Schema checker covering the keywords used by the ODY manifest schema."""
+    problems: list[str] = []
+    expected = schema.get("type")
+    if expected == "object":
+        if not isinstance(value, dict):
+            return [f"{path}: expected object"]
+        if "required" in schema:
+            for key in schema["required"]:
+                if key not in value:
+                    problems.append(f"{path}: missing required property '{key}'")
+        props = schema.get("properties", {})
+        for key, sub in props.items():
+            if key in value:
+                problems.extend(check_schema(value[key], sub, f"{path}.{key}"))
+        if schema.get("additionalProperties") is False:
+            for key in value:
+                if key not in props:
+                    problems.append(f"{path}: additional property '{key}' not allowed")
+        pattern_props = schema.get("patternProperties", {})
+        for key, sub in pattern_props.items():
+            for vkey, vval in value.items():
+                if vkey in props:
+                    continue
+                if re.search(key, vkey):
+                    problems.extend(check_schema(vval, sub, f"{path}.{vkey}"))
+    elif expected == "array":
+        if not isinstance(value, list):
+            return [f"{path}: expected array"]
+        min_items = schema.get("minItems")
+        if min_items is not None and len(value) < min_items:
+            problems.append(f"{path}: needs at least {min_items} items")
+        if "items" in schema:
+            for i, item in enumerate(value):
+                problems.extend(check_schema(item, schema["items"], f"{path}[{i}]"))
+    elif expected == "string":
+        if not isinstance(value, str):
+            return [f"{path}: expected string"]
+        if "const" in schema and value != schema["const"]:
+            problems.append(f"{path}: must equal {schema['const']!r}")
+        if "enum" in schema and value not in schema["enum"]:
+            problems.append(f"{path}: {value!r} not in {schema['enum']}")
+        if "pattern" in schema and not re.search(schema["pattern"], value):
+            problems.append(f"{path}: {value!r} does not match pattern {schema['pattern']!r}")
+    elif expected == "integer":
+        if isinstance(value, bool) or not isinstance(value, int):
+            problems.append(f"{path}: expected integer")
+    elif expected == "number":
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            problems.append(f"{path}: expected number")
+    elif expected == "boolean":
+        if not isinstance(value, bool):
+            problems.append(f"{path}: expected boolean")
+    if "const" in schema and expected not in ("string",):
+        if value != schema["const"]:
+            problems.append(f"{path}: must equal {schema['const']!r}")
+    return problems
+
+
+def load_manifest_schema() -> dict[str, Any]:
+    schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "ody-pack-manifest-v2.schema.json"
+    return json.loads(schema_path.read_text())
+
+
+def load_mission_schema() -> dict[str, Any]:
+    schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "ody-mission-bundle-v1.schema.json"
+    return json.loads(schema_path.read_text())
+
+
+# ------------------------------------------------------------------- build
+
+def build_pack(data: dict[str, Any], output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        output.unlink()
+    con = sqlite3.connect(str(output))
+    try:
+        con.executescript("""
+        PRAGMA journal_mode=DELETE;
+        CREATE TABLE pack_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE source_registry (
+          source_id TEXT PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL,
+          publisher TEXT NOT NULL, retrieved_at TEXT NOT NULL, source_version TEXT NOT NULL,
+          license_status TEXT NOT NULL, allowed_use TEXT NOT NULL
+        );
+        CREATE TABLE knowledge_entries (
+          entry_id TEXT PRIMARY KEY, category TEXT NOT NULL, risk_class TEXT NOT NULL,
+          title TEXT NOT NULL, summary TEXT NOT NULL, detail TEXT NOT NULL,
+          actions_json TEXT NOT NULL, checklist_json TEXT NOT NULL,
+          decision_rules_json TEXT NOT NULL, prohibitions_json TEXT NOT NULL,
+          source_ids_json TEXT NOT NULL, keywords_json TEXT NOT NULL,
+          declared_content_class TEXT NOT NULL, review_status TEXT NOT NULL,
+          language TEXT NOT NULL, created_at TEXT NOT NULL
+        );
+        CREATE VIRTUAL TABLE knowledge_fts USING fts5(
+          entry_id UNINDEXED, title, summary, detail, keywords, tokenize='unicode61'
+        );
+        """)
+        pack = data["pack"]
+        meta = {
+            "schema_version": MANIFEST_SCHEMA_VERSION,
+            "builder_version": BUILDER_VERSION,
+            "pack_id": pack["pack_id"],
+            "title": pack["title"],
+            "description": pack["description"],
+            "language": pack["language"],
+            "version": pack["version"],
+            "content_class": pack["content_class"],
+            "license_policy": pack["license_policy"],
+            "review_status": pack.get("review_status", "technical_demo"),
+            "publisher_type": pack.get("publisher_type", "community"),
+            "created_at": pack["created_at"],
+            "entry_count": str(len(data["entries"])),
+            "medical_governance": json.dumps(data.get("medical_governance"), sort_keys=True) if data.get("medical_governance") else "",
+        }
+        con.executemany("INSERT INTO pack_meta(key,value) VALUES (?,?)", list(meta.items()))
+        con.executemany(
+            """INSERT INTO source_registry(source_id,title,url,publisher,retrieved_at,source_version,license_status,allowed_use)
+               VALUES (:source_id,:title,:url,:publisher,:retrieved_at,:source_version,:license_status,:allowed_use)""",
+            data["sources"],
+        )
+        rows, fts = [], []
+        for e in data["entries"]:
+            rows.append((e["entry_id"], e["category"], e["risk_class"], e["title"], e["summary"], e["detail"],
+                         json.dumps(e["actions"], ensure_ascii=False), json.dumps(e["checklist"], ensure_ascii=False),
+                         json.dumps(e["decision_rules"], ensure_ascii=False), json.dumps(e["prohibitions"], ensure_ascii=False),
+                         json.dumps(e["source_ids"], ensure_ascii=False), json.dumps(e["keywords"], ensure_ascii=False),
+                         e["declared_content_class"], e["review_status"], pack["language"], pack["created_at"]))
+            fts.append((e["entry_id"], e["title"], e["summary"], e["detail"], " ".join(e["keywords"])))
+        con.executemany("INSERT INTO knowledge_entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+        con.executemany("INSERT INTO knowledge_fts(entry_id,title,summary,detail,keywords) VALUES (?,?,?,?,?)", fts)
+        con.commit()
+    finally:
+        con.close()
+
+
+def verify_artifact(data: dict[str, Any], artifact: Path) -> None:
+    con = sqlite3.connect(str(artifact))
+    try:
+        expected = len(data["entries"])
+        actual = con.execute("SELECT count(*) FROM knowledge_entries").fetchone()[0]
+        fts = con.execute("SELECT count(*) FROM knowledge_fts").fetchone()[0]
+        if actual != expected or fts != expected:
+            err(f"artifact cardinality mismatch entries={actual}/{expected}, fts={fts}/{expected}")
+        unresolved = con.execute("""SELECT e.entry_id FROM knowledge_entries e
+            JOIN json_each(e.source_ids_json) x LEFT JOIN source_registry s ON s.source_id=x.value
+            WHERE s.source_id IS NULL GROUP BY e.entry_id""").fetchall()
+        if unresolved:
+            err(f"artifact has unresolved lineage: {[r[0] for r in unresolved]}")
+        classes = {row[0] for row in con.execute("SELECT DISTINCT declared_content_class FROM knowledge_entries")}
+        if classes != {data["pack"]["content_class"]}:
+            err(f"artifact content classes mismatch {classes}")
+    finally:
+        con.close()
+
+
+# ----------------------------------------------------------------- commands
+
+def cmd_init(args: argparse.Namespace) -> int:
+    target = Path(args.directory)
+    target.mkdir(parents=True, exist_ok=True)
+    out = target / "pack.json"
+    if out.exists() and not args.force:
+        print(f"refusing to overwrite {out} (use --force)", file=sys.stderr)
+        return 1
+    scaffold = {
+        "pack": {
+            "pack_id": args.pack_id,
+            "title": args.title,
+            "description": "A small example pack built with the ODY format.",
+            "language": args.language,
+            "version": "1.0.0",
+            "category": "knowledge",
+            "content_class": "NON_MEDICAL_PROCEDURE",
+            "created_at": "2026-01-01T00:00:00Z",
+            "license_policy": "CC-BY-4.0",
+            "capabilities": ["EXAMPLE"],
+            "region_codes": [],
+            "publisher_id": "example",
+            "publisher_type": "individual",
+            "review_status": "technical_demo",
+        },
+        "sources": [
+            {
+                "source_id": "src-hello",
+                "title": "Example source",
+                "url": "https://example.org/ody-format",
+                "publisher": "example",
+                "retrieved_at": "2026-01-01",
+                "source_version": "1",
+                "license_status": "CC-BY-4.0",
+                "allowed_use": "attribution",
+            }
+        ],
+        "entries": [
+            {
+                "entry_id": "hello-world",
+                "category": "general",
+                "risk_class": "LOW",
+                "title": "Hello, offline world",
+                "summary": "This is a single example entry.",
+                "detail": "Replace this with your own knowledge entry. Every entry keeps its sources.",
+                "actions": ["Read the source", "Replace the content"],
+                "checklist": ["A title exists", "At least one source is cited"],
+                "decision_rules": ["If unsure, mark the entry for review"],
+                "prohibitions": ["Do not publish unreviewed medical advice"],
+                "source_ids": ["src-hello"],
+                "keywords": ["hello", "example"],
+                "declared_content_class": "NON_MEDICAL_PROCEDURE",
+                "review_status": "TECHNICAL_DEMO",
+            }
+        ],
+    }
+    out.write_text(json.dumps(scaffold, indent=2, ensure_ascii=False) + "\n")
+    print(f"Created {out}")
+    print("Next:  ody validate {} && ody build {} -o build/".format(out, out))
+    return 0
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    target = Path(args.target)
+    if target.name.endswith(".manifest.json") or (target.is_file() and args.manifest):
+        try:
+            manifest = json.loads(target.read_text())
+        except json.JSONDecodeError as exc:
+            print(f"INVALID: {target} is not valid JSON ({exc})", file=sys.stderr)
+            return 1
+        problems = check_schema(manifest, load_manifest_schema())
+    elif target.is_file():
+        try:
+            data = json.loads(target.read_text())
+        except json.JSONDecodeError as exc:
+            print(f"INVALID: {target} is not valid JSON ({exc})", file=sys.stderr)
+            return 1
+        if isinstance(data, dict) and str(data.get("schema_version", "")).startswith("ody-mission-bundle/"):
+            problems = check_schema(data, load_mission_schema())
+        else:
+            problems = validate_source(data)
+    else:
+        print(f"INVALID: {target} is neither a pack source nor a manifest", file=sys.stderr)
+        return 1
+
+    if problems:
+        print(f"INVALID: {target} has {len(problems)} problem(s):", file=sys.stderr)
+        for p in problems:
+            print(f"  - {p}", file=sys.stderr)
+        return 1
+    print(f"VALID: {target}")
+    return 0
+
+
+def cmd_build(args: argparse.Namespace) -> int:
+    source = Path(args.source)
+    try:
+        data = json.loads(source.read_text())
+    except json.JSONDecodeError as exc:
+        print(f"BUILD_FAIL: {source} is not valid JSON ({exc})", file=sys.stderr)
+        return 2
+
+    problems = validate_source(data)
+    if problems:
+        print(f"BUILD_FAIL: source has {len(problems)} problem(s):", file=sys.stderr)
+        for p in problems:
+            print(f"  - {p}", file=sys.stderr)
+        return 2
+
+    outdir = Path(args.output) if args.output else Path("build")
+    outdir.mkdir(parents=True, exist_ok=True)
+    artifact = outdir / f"{data['pack']['pack_id']}.sqlite"
+    build_pack(data, artifact)
+    verify_artifact(data, artifact)
+    manifest = build_manifest(data, artifact)
+
+    schema_problems = check_schema(manifest, load_manifest_schema())
+    if schema_problems:
+        print("BUILD_FAIL: generated manifest does not satisfy the schema:", file=sys.stderr)
+        for p in schema_problems:
+            print(f"  - {p}", file=sys.stderr)
+        return 2
+
+    manifest_path = artifact.with_suffix(".manifest.json")
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+
+    result = {
+        "status": "PASS",
+        "artifact": str(artifact),
+        "manifest": str(manifest_path),
+        "entries": len(data["entries"]),
+        "bytes": artifact.stat().st_size,
+        "sha256": manifest["files"][0]["sha256"],
+        "content_class": data["pack"]["content_class"],
+        "review_status": manifest["review"]["status"],
+    }
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def cmd_inspect(args: argparse.Namespace) -> int:
+    artifact = Path(args.pack)
+    if not artifact.is_file():
+        print(f"NOT FOUND: {artifact}", file=sys.stderr)
+        return 1
+    try:
+        con = sqlite3.connect(f"file:{artifact}?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        print(f"UNREADABLE: {artifact} ({exc})", file=sys.stderr)
+        return 1
+
+    try:
+        meta = dict(con.execute("SELECT key,value FROM pack_meta").fetchall())
+    except sqlite3.Error:
+        print(f"UNREADABLE: {artifact} has no pack_meta table", file=sys.stderr)
+        con.close()
+        return 1
+
+    print(f"Pack:        {meta.get('pack_id', '?')}  v{meta.get('version', '?')}")
+    print(f"Title:       {meta.get('title', '?')}")
+    print(f"Language:    {meta.get('language', '?')}")
+    print(f"Class:       {meta.get('content_class', '?')}")
+    print(f"Review:      {meta.get('review_status', meta.get('review', '?'))}")
+    print(f"Entries:     {meta.get('entry_count', '?')}")
+    print(f"License:     {meta.get('license_policy', '?')}")
+    try:
+        src_count = con.execute("SELECT count(*) FROM source_registry").fetchone()[0]
+        print(f"Sources:     {src_count}")
+        cats = [r[0] for r in con.execute("SELECT DISTINCT category FROM knowledge_entries ORDER BY category")]
+        print(f"Categories:  {', '.join(cats)}")
+    except sqlite3.Error:
+        pass
+
+    if args.verify:
+        sha = sha256_file(artifact)
+        print(f"sha256:      {sha}")
+        manifest_path = artifact.with_suffix(".manifest.json")
+        if manifest_path.is_file():
+            manifest = json.loads(manifest_path.read_text())
+            recorded = manifest.get("files", [{}])[0].get("sha256")
+            size_ok = manifest.get("files", [{}])[0].get("size_bytes") == artifact.stat().st_size
+            hash_ok = recorded == sha
+            print(f"manifest:    {manifest_path}")
+            print(f"hash_match:  {'OK' if hash_ok else 'MISMATCH'}")
+            print(f"size_match:  {'OK' if size_ok else 'MISMATCH'}")
+            if not (hash_ok and size_ok):
+                con.close()
+                return 1
+        else:
+            print("manifest:    (none next to artifact)")
+        try:
+            con.execute("SELECT count(*) FROM knowledge_fts").fetchone()
+            print("fts5:        OK")
+        except sqlite3.Error:
+            print("fts5:        MISSING")
+            con.close()
+            return 1
+    con.close()
+    return 0
+
+
+# --------------------------------------------------------------------- main
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="ody", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_init = sub.add_parser("init", help="scaffold a new pack source file")
+    p_init.add_argument("directory", help="directory to create the pack source in")
+    p_init.add_argument("--pack-id", default="example-hello-en")
+    p_init.add_argument("--title", default="Hello Offline")
+    p_init.add_argument("--language", default="en")
+    p_init.add_argument("--force", action="store_true", help="overwrite an existing pack.json")
+    p_init.set_defaults(func=cmd_init)
+
+    p_val = sub.add_parser("validate", help="validate a pack source or manifest")
+    p_val.add_argument("target", help="pack source JSON or manifest JSON")
+    p_val.add_argument("--manifest", action="store_true", help="force manifest validation")
+    p_val.set_defaults(func=cmd_validate)
+
+    p_build = sub.add_parser("build", help="build a pack (SQLite + FTS5 + manifest)")
+    p_build.add_argument("source", help="pack source JSON")
+    p_build.add_argument("-o", "--output", help="output directory (default: build/)")
+    p_build.set_defaults(func=cmd_build)
+
+    p_ins = sub.add_parser("inspect", help="inspect a built pack")
+    p_ins.add_argument("pack", help="built pack .sqlite")
+    p_ins.add_argument("--verify", action="store_true", help="verify hash, size and FTS5 integrity")
+    p_ins.set_defaults(func=cmd_inspect)
+
+    args = parser.parse_args()
+    try:
+        return args.func(args)
+    except Fail as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

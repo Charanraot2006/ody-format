@@ -1,0 +1,63 @@
+{
+  "schema_version": "ody-pack-manifest/v2",
+  "identity": {
+    "pack_id": "example-water-basics-en",
+    "display_name": "Water Basics (Example)",
+    "description": "Illustrative example pack: basic water collection and treatment steps. Educational sample content for the ODY format.",
+    "category": "procedures",
+    "language": "en",
+    "region_codes": []
+  },
+  "version": {
+    "semantic": "1.0.0",
+    "built_at": "2026-01-01T00:00:00Z"
+  },
+  "capabilities": [
+    "WATER_TREATMENT",
+    "SURVIVAL"
+  ],
+  "dependencies": {
+    "requires": [],
+    "optional": []
+  },
+  "lineage": {
+    "source_dataset": "public safety education (illustrative)",
+    "transformations": [
+      "normalize",
+      "validate",
+      "sqlite-fts5-index"
+    ],
+    "builder_version": "ody-format-builder/2.0.0"
+  },
+  "freshness": {
+    "source_published_at": "2026-01-01",
+    "pack_built_at": "2026-01-01",
+    "expiry_behavior": "warn"
+  },
+  "confidence": {
+    "technical": 0.6
+  },
+  "publisher": {
+    "publisher_id": "ody-examples",
+    "publisher_type": "community"
+  },
+  "review": {
+    "status": "technical_demo"
+  },
+  "content_governance": {
+    "declared_content_class": "NON_MEDICAL_PROCEDURE",
+    "license_policy": "CC-BY-4.0"
+  },
+  "integrity": {
+    "hash_algorithm": "sha256",
+    "signature_algorithm": "ed25519"
+  },
+  "files": [
+    {
+      "filename": "example-water-basics-en.sqlite",
+      "sha256": "9b751840f808715f81242ca6ac31ce02fc7a3fd98dbb3d26315d464ad48388f2",
+      "size_bytes": 49152,
+      "role": "primary"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Validate, build and verify example packs
+    runs-on: ubuntu-latest
+    env:
+      # Reproducible builds: fixed timestamp for byte-identical artifacts.
+      SOURCE_DATE_EPOCH: "1767225600" # 2026-01-01T00:00:00Z
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Make toolchain executable
+        run: chmod +x tools/bin/ody
+
+      - name: Validate all example packs
+        run: |
+          set -e
+          for p in examples/*/pack.json; do
+            echo "== $p"
+            tools/bin/ody validate "$p"
+          done
+
+      - name: Validate all mission bundles
+        run: |
+          set -e
+          for m in mission-bundles/*.json; do
+            echo "== $m"
+            tools/bin/ody validate "$m"
+          done
+
+      - name: Build all example packs
+        run: |
+          set -e
+          for p in examples/*/pack.json; do
+            tools/bin/ody build "$p" -o build/
+          done
+
+      - name: Verify built artifacts
+        run: |
+          set -e
+          for f in build/*.sqlite; do
+            echo "== $f"
+            tools/bin/ody inspect "$f" --verify
+          done
+
+      - name: Hello-world loop (init -> validate -> build -> inspect)
+        run: |
+          set -e
+          tools/bin/ody init /tmp/hello --pack-id ci-hello-en --title "CI Hello"
+          tools/bin/ody validate /tmp/hello/pack.json
+          tools/bin/ody build /tmp/hello/pack.json -o /tmp/hello/build
+          tools/bin/ody inspect /tmp/hello/build/ci-hello-en.sqlite --verify
+
+      - name: Reproducible build check
+        run: |
+          set -e
+          tools/bin/ody build examples/water-basics/pack.json -o /tmp/rep1
+          tools/bin/ody build examples/water-basics/pack.json -o /tmp/rep2
+          a=$(sha256sum /tmp/rep1/example-water-basics-en.sqlite | cut -d' ' -f1)
+          b=$(sha256sum /tmp/rep2/example-water-basics-en.sqlite | cut -d' ' -f1)
+          echo "build1: $a"
+          echo "build2: $b"
+          [ "$a" = "$b" ] && echo "REPRODUCIBLE: OK" || { echo "REPRODUCIBLE: FAILED"; exit 1; }
+
+      - name: No-secret scan (independent of toolchain)
+        run: |
+          set -e
+          # Second, independent scan using plain grep + gitleaks-style patterns.
+          # This must never match in a public repository.
+          if grep -rInE '(Atlas68|atlas_secure_token|BEGIN (OPENSSH|RSA) PRIVATE|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36})' . --exclude-dir=.git; then
+            echo "SECRET-LIKE PATTERN FOUND"; exit 1
+          fi
+          echo "SECRET SCAN: CLEAN"

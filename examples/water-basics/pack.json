@@ -1,0 +1,85 @@
+{
+  "pack": {
+    "pack_id": "example-water-basics-en",
+    "title": "Water Basics (Example)",
+    "description": "Illustrative example pack: basic water collection and treatment steps. Educational sample content for the ODY format.",
+    "language": "en",
+    "version": "1.0.0",
+    "category": "procedures",
+    "content_class": "NON_MEDICAL_PROCEDURE",
+    "created_at": "2026-01-01T00:00:00Z",
+    "license_policy": "CC-BY-4.0",
+    "capabilities": ["WATER_TREATMENT", "SURVIVAL"],
+    "region_codes": [],
+    "publisher_id": "ody-examples",
+    "publisher_type": "community",
+    "review_status": "technical_demo",
+    "source_dataset": "public safety education (illustrative)",
+    "transformations": ["normalize", "validate", "sqlite-fts5-index"],
+    "source_published_at": "2026-01-01",
+    "expiry_behavior": "warn",
+    "confidence": { "technical": 0.6 }
+  },
+  "sources": [
+    {
+      "source_id": "src-water-general",
+      "title": "General public water safety guidance (illustrative example)",
+      "url": "https://example.org/ody-format/water-safety",
+      "publisher": "ody-examples",
+      "retrieved_at": "2026-01-01",
+      "source_version": "1",
+      "license_status": "CC-BY-4.0",
+      "allowed_use": "attribution"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "water-collection-basics",
+      "category": "water",
+      "risk_class": "LOW",
+      "title": "Collecting water",
+      "summary": "Prefer the clearest available water source and collect water rather than drinking it directly from the wild.",
+      "detail": "Standing water and fast-moving water both need treatment before drinking. Collect water in a clean container and keep it covered.",
+      "actions": ["Choose the clearest water available", "Use a clean, dedicated container", "Keep collected water covered"],
+      "checklist": ["A clean container is available", "Water is treated before drinking"],
+      "decision_rules": ["If water is cloudy, let it settle or filter it before treating", "When in doubt, treat the water"],
+      "prohibitions": ["Do not drink untreated water from wild sources", "Do not mix untreated and treated water"],
+      "source_ids": ["src-water-general"],
+      "keywords": ["water", "collect", "container", "source"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "water-boiling",
+      "category": "water",
+      "risk_class": "LOW",
+      "title": "Treating water by boiling",
+      "summary": "Boiling is a common method to make water safer to drink when fuel is available.",
+      "detail": "Bring the water to a rolling boil and let it boil before removing it from the heat. Let it cool in a clean, covered container.",
+      "actions": ["Bring water to a rolling boil", "Let it boil before removing from heat", "Cool it in a clean covered container"],
+      "checklist": ["A reliable heat source is available", "A clean container is ready for cooling"],
+      "decision_rules": ["If fuel is limited, prioritize treating water for drinking over other uses", "If no heat source is available, use an alternative treatment method"],
+      "prohibitions": ["Do not treat water with unknown chemicals", "Do not store treated water in an unclean container"],
+      "source_ids": ["src-water-general"],
+      "keywords": ["water", "boil", "treat", "heat", "drink"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "water-storage",
+      "category": "water",
+      "risk_class": "LOW",
+      "title": "Storing treated water",
+      "summary": "Store treated water in clean, sealed containers and keep track of when it was treated.",
+      "detail": "Label containers with the treatment date and use the oldest treated water first. Keep containers out of direct sunlight where possible.",
+      "actions": ["Label containers with the treatment date", "Use the oldest treated water first", "Keep containers sealed and out of direct sunlight"],
+      "checklist": ["Containers are clean and sealed", "Treatment date is recorded"],
+      "decision_rules": ["If the water smells or looks wrong, do not drink it and treat a fresh batch"],
+      "prohibitions": ["Do not reuse a container that held unknown substances", "Do not drink water of uncertain origin"],
+      "source_ids": ["src-water-general"],
+      "keywords": ["water", "store", "container", "label", "seal"],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    }
+  ]
+}
