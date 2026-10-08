@@ -89,3 +89,21 @@ Reproducible builds matter: `ody build` supports `SOURCE_DATE_EPOCH` for byte-id
 - Be specific and kind in review; cite the reason, not just the verdict
 - Never present unreviewed safety-critical advice as reviewed
 - Credit every source; attribution is not optional
+
+## Licensing of contributions
+
+Different contribution types carry different licenses — see the
+[licensing model](docs/LICENSING.md):
+
+- **Code** (toolchain, schemas, CI): contributed under **Apache-2.0**, like the
+  rest of the software in this repository.
+- **Pack content** (knowledge entries): contributed under **your declared pack
+  license** (`license_policy`, ideally an SPDX identifier). The Apache-2.0
+  license of this repository does not apply to your content.
+
+By submitting, you confirm that you have the right to contribute the material
+under the declared license. Reviewers will check `license_policy`, each
+source's `license_status` and `allowed_use` for redistribution compatibility.
+
+For naming and certification marks ("ODY-compatible" vs. "Official ODY"), see
+[TRADEMARKS.md](TRADEMARKS.md) and [docs/CERTIFICATION.md](docs/CERTIFICATION.md).

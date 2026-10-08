@@ -169,8 +169,8 @@
     },
     "content_governance": {
       "type": "object",
-      "description": "Inhaltsklasse und Sicherheits-Gates. Medizinische Inhalte bleiben permanent PENDING_MEDICAL_REVIEW.",
-      "required": ["declared_content_class"],
+      "description": "Inhaltsklasse, Content-Lizenz und Sicherheits-Gates. Medizinische Inhalte bleiben permanent PENDING_MEDICAL_REVIEW. Die Apache-2.0-Lizenz des Builders gilt NIE automatisch fuer Inhalte: license_policy ist deshalb Pflicht.",
+      "required": ["declared_content_class", "license_policy"],
       "additionalProperties": false,
       "properties": {
         "declared_content_class": {

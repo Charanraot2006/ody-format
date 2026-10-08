@@ -105,4 +105,15 @@ Found a security issue? See [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+**Make the format open. Protect the brand. Build the business around trust.**
+
+| Layer | License |
+|---|---|
+| Format, toolchain, schemas | **Apache-2.0** — commercial use explicitly welcome |
+| Knowledge pack content | **Per pack, declared by the author** — the builder's license never applies to content |
+| ODY name, logo, certification marks | **Trademark law** — see [TRADEMARKS.md](TRADEMARKS.md) |
+
+Two trust tiers exist: **ODY-compatible** (passes the open toolchain — usable by
+anyone) and **Official ODY** (registry-listed after human review — permission
+required). See [docs/CERTIFICATION.md](docs/CERTIFICATION.md) and the full
+[licensing model](docs/LICENSING.md). Details in [NOTICE](NOTICE).

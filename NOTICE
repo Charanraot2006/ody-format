@@ -1,0 +1,35 @@
+ODY Format
+Copyright 2026 The ODY Project contributors
+
+This repository is licensed under the Apache License, Version 2.0 (see LICENSE).
+That license applies to the SOFTWARE in this repository — the toolchain (tools/),
+the JSON schemas (schemas/), and the documentation — and NOT to the content of
+knowledge packs.
+
+Licensing layers
+----------------
+
+1. Toolchain, schemas, documentation: Apache-2.0.
+   Commercial use, modification and redistribution are explicitly welcome.
+
+2. Knowledge pack content: licensed separately, per pack. Every pack declares
+   its own content license in its manifest
+   ("content_governance.license_policy") and every source declares its
+   "license_status" and "allowed_use". The Apache-2.0 license of this
+   repository NEVER applies automatically to pack content. A builder license
+   does not travel with the content it processes.
+
+3. Names, logos and certification marks: NOT licensed under Apache-2.0.
+   See TRADEMARKS.md.
+
+Provenance
+----------
+
+All source code in this repository is original work of the ODY project.
+No third-party source code is incorporated. The Apache-2.0 license text in
+LICENSE is the canonical text published by the Apache Software Foundation and
+is reproduced unmodified.
+
+The example packs under examples/ contain original illustrative content
+published under CC-BY-4.0 (as declared in each pack's license_policy). They
+demonstrate the license-declaration mechanism. They are not expert advice.
