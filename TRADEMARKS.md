@@ -55,9 +55,24 @@ as evidence of first use if a dispute ever arises:
 4. **Consistent ™ usage** — in public documents and screenshots, mark the name
    with ™ wherever a symbol is used.
 5. **A defined trigger for registration** — e.g. "first external contributor
-   pack, first partner inquiry, or first commercial reuse" → file the DPMA
-   application. At that point, a few hundred euros are cheap insurance against
-   squatting.
+   pack, first partner inquiry, a sudden attention spike, or first commercial
+   reuse" → file the DPMA application. At that point, a few hundred euros are
+   cheap insurance against squatting.
+
+**Case note — OpenClaw (January 2026):** The then fastest-growing open-source
+AI assistant was published as open source (MIT) from day one with **no word
+mark of its own registered**. When Anthropic asserted its "Claude" mark, the
+project renamed twice in three days (Clawdbot → Moltbot → OpenClaw) — and
+within days, third parties filed trademark applications for the new name in
+other jurisdictions. The project prevailed in part through documented priority
+rights (first use), but the chaos and follow-on disputes cost far more than an
+early registration would have. Two lessons for us: (1) the registration trigger
+must include **sudden attention spikes**, not only partner interest — squatting
+moves at viral speed; (2) our position is structurally better than OpenClaw's
+was: "ODY" is our own name, with no prior rights holder above us. That is
+exactly why a free register search (DPMAregister / TMview / WIPO) before the
+public launch matters — OpenClaw's original name collided with an existing
+mark from day one, a collision a prior search would have caught.
 
 ## What you may do without permission
 
