@@ -2,7 +2,11 @@
 
 The Apache-2.0 license in this repository covers the **software**. It does **not**
 grant any trademark rights. The ODY name, the ODY logo, and the ODY certification
-marks are protected trademarks and are governed by this policy.
+marks are **claimed trademarks** of the ODY project, governed by this policy. They
+are **not registered trademarks at this time** — see
+[Registration status](#registration-status) below. Where a symbol is used at all,
+please use **™**, never ® (® misrepresents registration status and is a protected
+sign in Germany).
 
 ## What is protected
 
@@ -11,6 +15,49 @@ marks are protected trademarks and are governed by this policy.
 | **Project name** | "ODY" | Trademark |
 | **Logo** | The ODY logo, with or without text | Trademark + copyright |
 | **Certification marks** | "Official ODY", "ODY-reviewed", "ODY certified" | Certification marks — only granted through the official registry |
+
+## Registration status
+
+As of October 2026, these marks are **claimed through use, not registered**.
+This is a conscious cost/risk trade-off while adoption is being proven — not an
+oversight — and this document deliberately does not suggest otherwise.
+
+What that means in practice:
+
+- Unregistered marks do carry rights in some jurisdictions (protection of
+  business identifiers through use in Germany, § 5 MarkenG; common-law
+  trademark rights in the US), but enforcement is significantly harder and
+  usually geographically limited.
+- Germany and the EU are **first-to-file** systems: registration — not first
+  use — decides. A third party could file "ODY" first, and opposition or
+  cancellation proceedings then cost more than an early registration would have.
+- A registration (DPMA word mark: a few hundred euros for up to three classes;
+  EUIPO Union mark: from approx. 850 euros) is therefore **planned but deferred**
+  until adoption is proven. Note: this is a **trademark** question (Wortmarke),
+  not a patent question — patents protect technical inventions and do not apply
+  here.
+
+## Interim measures (before registration)
+
+These steps keep the risk low at little or no cost, and all of them also serve
+as evidence of first use if a dispute ever arises:
+
+1. **Free availability search** — check DPMAregister, EUIPO TMview and the WIPO
+   Global Brand Database for conflicts; archive the result with a date.
+2. **Secure the namespace** — the GitHub organization and one or two domains
+   (a few euros per year) block the cheapest form of squatting. Same idea on
+   package registries (e.g. the PyPI name `ody` was still unclaimed as of
+   2026-10-09): a defensive registration costs nothing and prevents dependency
+   confusion later.
+3. **Document first use** — the date of the first public release (Git history,
+   an archive.org snapshot of the repository page) establishes the project's
+   reputation timeline.
+4. **Consistent ™ usage** — in public documents and screenshots, mark the name
+   with ™ wherever a symbol is used.
+5. **A defined trigger for registration** — e.g. "first external contributor
+   pack, first partner inquiry, or first commercial reuse" → file the DPMA
+   application. At that point, a few hundred euros are cheap insurance against
+   squatting.
 
 ## What you may do without permission
 

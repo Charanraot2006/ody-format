@@ -43,6 +43,26 @@ carries claims (`review.status`, `publisher.publisher_type`), and the **registry
 is the authority** that makes a claim official. Downstream software should
 treat manifest claims as self-declared and registry listings as verified.
 
+## License declaration is not license proof
+
+The builder enforces that a license is **declared**. It cannot verify that the
+author actually **holds** the rights they declare. A manifest field is a claim,
+not a chain of title — the same distinction as above, applied to content rights.
+
+Tier 2 ("Official ODY") therefore includes a **documented rights audit** as part
+of the registry review:
+
+| Audit step | What is checked |
+|---|---|
+| Source compatibility | each source's `license_status` permits redistribution under `allowed_use` |
+| Pack license fit | `license_policy` is compatible with every source, using the most restrictive one where licenses mix |
+| Provenance record | reviewer, date and sources checked are kept in the registry entry alongside the review record |
+
+A pack with a declared license but without a completed rights audit is Tier 1
+("ODY-compatible") at most. **Declaration proves intent; audit establishes
+trust.** Reviewers must not treat a filled-in `license_policy` field as proof of
+rights.
+
 ## Naming rules
 
 | Statement | Who may use it | With logo? |
@@ -51,6 +71,29 @@ treat manifest claims as self-declared and registry listings as verified.
 | "built with ody-format" / "reads ODY packs" | anyone, truthfully | no |
 | "Official ODY" / "ODY-reviewed" / "ODY certified" | registry-listed packs only, with permission | only with written authorization |
 | product/company name containing "ODY" | requires written permission | — |
+
+## Registry neutrality: the standard is open, certifications are scoped
+
+The format must not hard-wire a single registry. Anyone may run a registry for
+their own trust community: a mountaineering association can review alpine packs,
+a disaster-relief organization can certify emergency content, a device maker can
+approve packs for its hardware. A standard that technically only admits one
+registry would contradict the goal of an open standard in the long run.
+
+The rules that keep this honest:
+
+- **Schemas carry claims, not authority.** Nothing in the format requires a pack
+  to be listed in any specific registry to be valid or buildable.
+- **Marks belong to their registries.** "Official ODY" is a certification mark
+  of the ODY registry alone. Another registry grants its own marks ("Reviewed by
+  <organization>") under its own policy — never under ODY's.
+- **Downstream software should support multiple trusted registries** (a
+  configurable trust list), not one hardcoded endpoint.
+- **The ODY registry is authoritative for exactly one scope:** ODY's own
+  certification marks and the tier "Official ODY". That authority is earned by
+  review quality, not enforced by the format.
+
+Open standard, scoped certification — that is the whole model.
 
 ## Upgrade path for pack authors
 

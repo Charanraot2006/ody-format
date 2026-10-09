@@ -62,6 +62,25 @@ type. The competitive advantage of ODY does not live in exclusive ownership of
 a JSON schema — it lives in the combination of brand, official distribution,
 reviewed content, trust, community, and the ODY application itself.
 
+## Choosing a license for ODY's own core packs
+
+There is **no project-wide default content license**. Each pack is a deliberate
+decision, because the trade-offs are real:
+
+| Route | Blocks resale by others | Enables ODY premium bundles & partner deals | Trade-off |
+|---|---|---|---|
+| Permissive (e.g. `CC-BY-4.0`) | no | yes | maximum adoption; protection lives in brand, registry and trust instead |
+| Non-commercial (e.g. `CC-BY-NC-SA-4.0`) | mostly | **no** | also blocks ODY's own commercial use; "non-commercial" is notoriously ambiguous |
+| Proprietary content license / dual licensing | yes (commercial reuse) | yes | precise instrument for fully self-created content: free for community use, paid for commercial redistribution |
+
+A non-commercial license is a content-level shield with a business cost — it
+should not be applied to core packs by default, because it would later block
+exactly the premium bundles and commercial partner integrations the product
+model builds on. For **fully self-created content**, proprietary licensing or
+dual licensing is usually the sharper instrument. For **third-party sources**,
+the source's license must permit redistribution under the declared license —
+no pack-level choice can override that.
+
 ## FAQ
 
 **Can someone fork the toolchain and sell it?**
@@ -70,8 +89,9 @@ logo, and cannot claim official certification. If the market rewards them,
 that validates the format — and the format is where the ecosystem value lives.
 
 **Can someone sell my pack content?**
-Only if your pack's license allows it. Choose `CC-BY-NC-SA-4.0` or similar if
-it does not.
+Only if your pack's license allows it. A permissive license allows it; a
+non-commercial or proprietary/dual license blocks it. See
+[Choosing a license for ODY's own core packs](#choosing-a-license-for-odys-own-core-packs).
 
 **Can someone run a paid SaaS on the toolchain?**
 Yes, under Apache-2.0. They cannot use the ODY brand or official certification

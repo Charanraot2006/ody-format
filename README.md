@@ -114,6 +114,10 @@ Found a security issue? See [SECURITY.md](SECURITY.md).
 | ODY name, logo, certification marks | **Trademark law** — see [TRADEMARKS.md](TRADEMARKS.md) |
 
 Two trust tiers exist: **ODY-compatible** (passes the open toolchain — usable by
-anyone) and **Official ODY** (registry-listed after human review — permission
-required). See [docs/CERTIFICATION.md](docs/CERTIFICATION.md) and the full
-[licensing model](docs/LICENSING.md). Details in [NOTICE](NOTICE).
+anyone) and **Official ODY** (registry-listed after a documented human review
+including a rights audit — permission required). Registries are pluggable:
+anyone can run one for their own trust community, and the ODY registry is
+authoritative only for ODY's own marks. Marks are claimed (™), not registered —
+see [TRADEMARKS.md](TRADEMARKS.md). Full picture:
+[docs/CERTIFICATION.md](docs/CERTIFICATION.md),
+[docs/LICENSING.md](docs/LICENSING.md), [NOTICE](NOTICE).
