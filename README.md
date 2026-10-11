@@ -19,7 +19,7 @@ ODY Format gives that content a common shape so anyone can build it, review it, 
 Requires Python 3.8+. No third-party packages.
 
 ```bash
-git clone https://github.com/ody-format/ody-format.git
+git clone https://github.com/TyrionX68/ody-format.git
 cd ody-format
 export PATH="$PWD/tools/bin:$PATH"
 
