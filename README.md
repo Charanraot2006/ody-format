@@ -97,6 +97,19 @@ They build cleanly and are marked `technical_demo` — they illustrate the forma
 
 That's the question this project exists to answer. A mountain guide's alpine knowledge. A sailor's local waters. A geologist's regional hazards. A radio amateur's communication practice. A traveller's notes on a place. If that's you, you don't need to be a developer to contribute — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Project status (October 2026)
+
+**Release: `spec-1.0-draft`** — the format is usable today, the spec is still open for change. Breaking changes are cheap now and will get expensive later, so this is the right moment to argue with us.
+
+| Part | State |
+|---|---|
+| Manifest schema v2 / mission bundle schema v1 | Draft — feedback wanted |
+| `ody` CLI (init → validate → build → inspect) | Stable, 18/18 tests, Python 3.8+, zero dependencies |
+| Reference app (ODY, Android) | Separate project — public release in preparation |
+| **First external pack builder** | **Not yet — that is the milestone this repo exists for** |
+
+If you build a pack with this toolchain and something confused you, that is a bug report we want — even if the toolchain did nothing wrong.
+
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the roles (pack author → reviewer → domain expert → maintainer), the review ladder, and how to submit a pack.
