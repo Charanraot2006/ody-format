@@ -1,0 +1,157 @@
+{
+  "pack": {
+    "pack_id": "example-fire-warmth-basics-en",
+    "title": "Fire & Warmth Basics (Example)",
+    "description": "Illustrative example pack: basic fire safety, camp setup, and warmth maintenance steps. Educational sample content for the ODY format.",
+    "language": "en",
+    "version": "1.0.0",
+    "category": "procedures",
+    "content_class": "NON_MEDICAL_PROCEDURE",
+    "created_at": "2026-10-12T00:00:00Z",
+    "license_policy": "CC-BY-4.0",
+    "capabilities": [
+      "FIRE_SAFETY",
+      "WARMTH_MANAGEMENT"
+    ],
+    "region_codes": [],
+    "publisher_id": "ody-examples",
+    "publisher_type": "community",
+    "review_status": "technical_demo",
+    "source_dataset": "public fire safety and outdoors awareness (illustrative)",
+    "transformations": [
+      "normalize",
+      "validate",
+      "sqlite-fts5-index"
+    ],
+    "source_published_at": "2026-10-12",
+    "expiry_behavior": "warn",
+    "confidence": {
+      "technical": 0.6
+    }
+  },
+  "sources": [
+    {
+      "source_id": "src-fire-general",
+      "title": "General camp fire safety and warmth preparation guidance (illustrative example)",
+      "url": "https://example.org/ody-format/fire-safety",
+      "publisher": "ody-examples",
+      "retrieved_at": "2026-10-12",
+      "source_version": "1",
+      "license_status": "CC-BY-4.0",
+      "allowed_use": "attribution"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "fire-site-preparation",
+      "category": "fire",
+      "risk_class": "LOW",
+      "title": "Preparing a safe fire site",
+      "summary": "Clear dry leaves and debris to establish a safe fire pit away from overhanging branches.",
+      "detail": "Select a flat area sheltered from strong wind. Clear a circular area of flammable debris down to bare soil and surround the pit with stones if available.",
+      "actions": [
+        "Select a flat site clear of overhanging branches",
+        "Clear dry leaves and brush down to bare dirt",
+        "Create a stone border around the fire area"
+      ],
+      "checklist": [
+        "Site is away from dry vegetation and tents",
+        "A clearing of at least 3 feet is cleared around the pit"
+      ],
+      "decision_rules": [
+        "If winds are high or dry conditions exist, avoid lighting an open fire",
+        "If near low branches, choose an alternate site"
+      ],
+      "prohibitions": [
+        "Do not build a fire near dry grass or under low tree branches",
+        "Do not leave a burning fire unattended"
+      ],
+      "source_ids": [
+        "src-fire-general"
+      ],
+      "keywords": [
+        "fire",
+        "preparation",
+        "site",
+        "clearing",
+        "safety"
+      ],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "fire-extinguishing",
+      "category": "fire",
+      "risk_class": "LOW",
+      "title": "Extinguishing a campfire safely",
+      "summary": "Douse embers completely with water, stir the ashes, and confirm everything is cold to touch.",
+      "detail": "Pour water onto all embers, stir the ash pile with a stick or shovel, and pour more water until no steam rises and embers are completely cold.",
+      "actions": [
+        "Pour water over embers and burning wood",
+        "Stir the ash and embers thoroughly",
+        "Touch the ashes gently to ensure they are completely cold"
+      ],
+      "checklist": [
+        "Water or dirt is readily available near the fire site",
+        "Ashes are completely cold to touch before leaving"
+      ],
+      "decision_rules": [
+        "If steam or heat is still rising, continue adding water and stirring",
+        "If water is scarce, smother thoroughly with dirt or sand and stir"
+      ],
+      "prohibitions": [
+        "Do not abandon hot embers or smoldering ash",
+        "Do not bury hot coals without fully cooling them first"
+      ],
+      "source_ids": [
+        "src-fire-general"
+      ],
+      "keywords": [
+        "fire",
+        "extinguish",
+        "water",
+        "cooling",
+        "safety"
+      ],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    },
+    {
+      "entry_id": "warmth-layering-basics",
+      "category": "warmth",
+      "risk_class": "LOW",
+      "title": "Retaining warmth through clothing layering",
+      "summary": "Use clothing layering to manage body heat, moisture, and wind exposure in cold weather.",
+      "detail": "Wear a moisture-wicking base layer, an insulating middle layer for warmth retention, and a wind-resistant outer shell to protect against cold air.",
+      "actions": [
+        "Wear a synthetic or wool base layer to manage moisture",
+        "Add a fleece or insulated mid-layer for warmth",
+        "Cover with a windproof shell during windy or damp conditions"
+      ],
+      "checklist": [
+        "Clothing layers are dry and uncompressed",
+        "Outer shell provides adequate wind protection"
+      ],
+      "decision_rules": [
+        "If sweating occurs, shed an insulation layer to remain dry",
+        "If feeling cold while stationary, add an insulating layer before chilling sets in"
+      ],
+      "prohibitions": [
+        "Do not wear wet cotton clothing in cold environments",
+        "Do not allow insulation layers to become damp"
+      ],
+      "source_ids": [
+        "src-fire-general"
+      ],
+      "keywords": [
+        "warmth",
+        "layering",
+        "clothing",
+        "insulation",
+        "weather"
+      ],
+      "declared_content_class": "NON_MEDICAL_PROCEDURE",
+      "review_status": "TECHNICAL_DEMO"
+    }
+  ]
+}
